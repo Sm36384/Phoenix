@@ -8,7 +8,7 @@
  *      USE_CAMOUFOX, CAMOUFOX_EXECUTABLE_PATH, FINGERPRINT_API_KEY, FINGERPRINT_LAST_REQUEST_ID, PROXY_*_ALT
  */
 
-import { chromium } from "playwright";
+import { chromium, type LaunchOptions } from "playwright";
 import { getProxyForHub, useCamoufoxForHub } from "../src/lib/scraper/proxy-config";
 import { applyCamoufoxToLaunchOptions } from "../src/lib/scraper/camoufox-launch";
 import { launchWithStealth } from "../src/lib/scraper/launch-with-stealth";
@@ -30,12 +30,12 @@ async function main() {
 
   let proxy = getProxyForHub(hubId);
   const useCamoufox = useCamoufoxForHub(hubId);
-  let launchOptions: Record<string, unknown> = {
+  let launchOptions: LaunchOptions = {
     headless: true,
     args: ["--disable-blink-features=AutomationControlled"],
     proxy: proxy ?? undefined,
   };
-  launchOptions = applyCamoufoxToLaunchOptions(launchOptions as { headless?: boolean; proxy?: unknown; args?: string[]; executablePath?: string }, useCamoufox) as Record<string, unknown>;
+  launchOptions = applyCamoufoxToLaunchOptions(launchOptions, useCamoufox);
 
   const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
@@ -43,7 +43,7 @@ async function main() {
   let context: Awaited<ReturnType<Awaited<ReturnType<typeof chromium.launch>>["newContext"]>>;
 
   const stealthResult = await launchWithStealth(
-    launchOptions as { headless?: boolean; proxy?: { server: string; username?: string; password?: string }; args?: string[]; executablePath?: string },
+    launchOptions,
     { userAgent }
   );
 
