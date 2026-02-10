@@ -1,5 +1,5 @@
 # Project Phoenix
 
-Local project — no git.
+Transformation Pulse Global — Private, signal-driven intelligence for $1B+ digital transformation mandates across 7 global hubs.
 
-Add your code here.
+See [PRODUCT-SPECS.md](./PRODUCT-SPECS.md) for full specification and [INTEGRATION.md](./INTEGRATION.md) for setup instructions.
