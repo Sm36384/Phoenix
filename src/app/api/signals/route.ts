@@ -5,27 +5,53 @@ import { getSignalsWithStakeholders } from "@/data/mock-signals";
 
 /**
  * GET /api/signals — returns signals with stakeholders for the dashboard.
+ * Supports pagination: ?page=1&limit=20
  * When Supabase is configured and user is authenticated: reads from DB (RLS).
  * When Supabase is not configured or user not logged in: returns mock data (or [] if Supabase configured but no user).
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10))); // Max 100, default 20
+  const offset = (page - 1) * limit;
+
   const supabase = await createClient();
 
   if (!supabase) {
-    return NextResponse.json(getSignalsWithStakeholders());
+    const mock = getSignalsWithStakeholders();
+    // Paginate mock data
+    const paginated = mock.slice(offset, offset + limit);
+    return NextResponse.json({
+      signals: paginated,
+      pagination: {
+        page,
+        limit,
+        total: mock.length,
+        totalPages: Math.ceil(mock.length / limit),
+      },
+    });
   }
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json([]);
+    return NextResponse.json({
+      signals: [],
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    });
   }
+
+  // Get total count for pagination
+  const { count, error: countError } = await supabase
+    .from("signals")
+    .select("*", { count: "exact", head: true });
 
   const { data: signalsRows, error: signalsError } = await supabase
     .from("signals")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (signalsError) {
     return NextResponse.json({ error: signalsError.message }, { status: 500 });
@@ -73,7 +99,16 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json(result);
+  const total = count ?? 0;
+  return NextResponse.json({
+    signals: result,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 }
 
 function rowToSignal(row: Record<string, unknown>): Signal {

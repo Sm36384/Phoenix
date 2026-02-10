@@ -5,7 +5,7 @@
 
 import type { ApolloPerson } from "@/lib/integrations/people-discovery";
 import { findHiringManagerForCompany, apolloPeopleSearch } from "@/lib/integrations/people-discovery";
-import { findPartnerOnLinkedIn } from "@/lib/integrations/phantombuster";
+import { discoverPartnerWithFallback } from "@/lib/integrations/partner-discovery-with-fallback";
 import { find_mutual_overlap } from "@/lib/integrations/bridge-overlap";
 import type { ExecutiveJDEntities } from "./parse-executive-jd";
 import { shouldTriggerPartnerBridgeLogic } from "./parse-executive-jd";
@@ -55,11 +55,11 @@ export async function resolveExecutivePartnerAndBridgeTarget(
     apolloPerson = await findHiringManagerForCompany(company);
   }
 
-  // When Apollo doesn't have the person, try PhantomBuster (LinkedIn) for Partner by name + company
-  let linkedinUrlFromPhantom: string | undefined;
+  // When Apollo doesn't have the person, try fallback chain (PhantomBuster → Proxycurl → cache)
+  let linkedinUrlFromFallback: string | undefined;
   if (partnerName && company && !apolloPerson?.linkedin_url) {
-    const phantom = await findPartnerOnLinkedIn(partnerName, company);
-    linkedinUrlFromPhantom = phantom?.linkedinUrl;
+    const fallback = await discoverPartnerWithFallback(partnerName, company);
+    linkedinUrlFromFallback = fallback.linkedinUrl;
   }
 
   if (!apolloPerson) {
@@ -68,9 +68,9 @@ export async function resolveExecutivePartnerAndBridgeTarget(
       partnerTitle: entities.partnerTitle ?? undefined,
       company,
       apolloPerson: null,
-      linkedinUrl: linkedinUrlFromPhantom,
-      bridgeTargetId: linkedinUrlFromPhantom
-        ? `linkedin-${encodeURIComponent(linkedinUrlFromPhantom)}`
+      linkedinUrl: linkedinUrlFromFallback,
+      bridgeTargetId: linkedinUrlFromFallback
+        ? `linkedin-${encodeURIComponent(linkedinUrlFromFallback)}`
         : `exec-${company}-${partnerName ?? "unknown"}`,
       bridgeTargetPastCompanies: [],
     };
@@ -85,7 +85,7 @@ export async function resolveExecutivePartnerAndBridgeTarget(
     partnerTitle: apolloPerson.title ?? entities.partnerTitle ?? undefined,
     company,
     apolloPerson,
-    linkedinUrl: apolloPerson.linkedin_url ?? linkedinUrlFromPhantom,
+    linkedinUrl: apolloPerson.linkedin_url ?? linkedinUrlFromFallback,
     email: apolloPerson.email,
     bridgeTargetId: apolloPerson.id,
     bridgeTargetPastCompanies: pastCompanies,

@@ -25,16 +25,29 @@ export default function DashboardPage() {
   const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus | null>(null);
   const [seedLoading, setSeedLoading] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchSignals = useCallback(() => {
     setSignalsLoading(true);
-    fetch("/api/signals")
+    fetch(`/api/signals?page=${page}&limit=20`)
       .then((r) => r.json())
       .then((data) => {
-        setSignals(Array.isArray(data) ? data : []);
+        if (data.signals && Array.isArray(data.signals)) {
+          setSignals(data.signals);
+          if (data.pagination) {
+            setTotalPages(data.pagination.totalPages ?? 1);
+          }
+        } else if (Array.isArray(data)) {
+          // Backward compatibility: if API returns array directly
+          setSignals(data);
+        } else {
+          setSignals([]);
+        }
       })
       .catch(() => setSignals([]))
       .finally(() => setSignalsLoading(false));
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     fetchSignals();
@@ -102,10 +115,35 @@ export default function DashboardPage() {
         {signalsLoading ? (
           <p className="text-sm text-gray-500">Loading signals…</p>
         ) : (
-          <SignalTable
-            signals={signals}
-            onSelectSignal={setSelectedSignal}
-          />
+          <>
+            <SignalTable
+              signals={signals}
+              onSelectSignal={setSelectedSignal}
+            />
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="rounded border border-gray-200 px-3 py-1.5 text-sm text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="rounded border border-gray-200 px-3 py-1.5 text-sm text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
 
