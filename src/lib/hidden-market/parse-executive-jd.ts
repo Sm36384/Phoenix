@@ -88,8 +88,8 @@ Return valid JSON only, with keys: partnerName, partnerTitle, company, roleTitle
     let salaryMinUsd = (parsed.salaryMinUsd as number) ?? null;
     const isExecutive =
       (parsed.isExecutive as boolean) ??
-      (salaryMinUsd != null && salaryMinUsd >= EXECUTIVE_SALARY_THRESHOLD_USD) ||
-      /(\$|USD|£)\s*\d+\s*k|\d+\s*,\s*\d{3}\s*(\$|USD)/i.test(salaryRange ?? "");
+      ((salaryMinUsd != null && salaryMinUsd >= EXECUTIVE_SALARY_THRESHOLD_USD) ||
+       /(\$|USD|£)\s*\d+\s*k|\d+\s*,\s*\d{3}\s*(\$|USD)/i.test(salaryRange ?? ""));
 
     if (salaryRange && salaryMinUsd == null) {
       const match = salaryRange.match(/\$?(\d+(?:\.\d+)?)\s*k/i);
