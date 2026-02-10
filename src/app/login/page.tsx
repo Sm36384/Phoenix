@@ -36,31 +36,19 @@ export default function LoginPage() {
       setMessage("Sign-in is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env");
       return;
     }
-    if (!email) {
-      setMessage("Email required.");
+    if (!email || !password) {
+      setMessage("Email and password required.");
       return;
     }
     setLoading(true);
     setMessage("");
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ 
-        email,
-        options: {
-          shouldCreateUser: true,
-        }
-      });
-      if (error) {
-        setMessage(error.message);
-        console.error("Sign up error:", error);
-      } else {
-        setMessage("Check your email for the sign-up link.");
-      }
-    } catch (err) {
-      setMessage("An error occurred. Please try again.");
-      console.error("Sign up exception:", err);
-    } finally {
-      setLoading(false);
+    const { error } = await supabase.auth.signUp({ email, password });
+    setLoading(false);
+    if (error) {
+      setMessage(error.message);
+      return;
     }
+    setMessage("Account created. Check your email to confirm, or sign in below if confirmation is disabled.");
   }
 
   async function signInWithMagicLink(e: React.FormEvent) {
@@ -69,31 +57,15 @@ export default function LoginPage() {
       setMessage("Sign-in is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env");
       return;
     }
-    if (!email) {
-      setMessage("Please enter your email address.");
-      return;
-    }
     setLoading(true);
     setMessage("");
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ 
-        email,
-        options: {
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
-        }
-      });
-      if (error) {
-        setMessage(error.message);
-        console.error("Magic link error:", error);
-      } else {
-        setMessage("Check your email for the login link.");
-      }
-    } catch (err) {
-      setMessage("An error occurred. Please try again.");
-      console.error("Magic link exception:", err);
-    } finally {
-      setLoading(false);
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    setLoading(false);
+    if (error) {
+      setMessage(error.message);
+      return;
     }
+    setMessage("Check your email for the login link.");
   }
 
   return (
@@ -111,7 +83,7 @@ export default function LoginPage() {
             <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code className="text-xs">.env</code> to enable sign-in.
           </p>
         )}
-        <form onSubmit={signInWithMagicLink} className="space-y-4">
+        <form onSubmit={signInWithPassword} className="space-y-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-primary">
               Email
@@ -123,56 +95,48 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded border border-gray-200 px-3 py-2 text-primary"
               required
-              placeholder="your@email.com"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-primary">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded border border-gray-200 px-3 py-2 text-primary"
             />
           </div>
           {message && (
-            <p className={`text-sm ${message.includes("Check your email") ? "text-green-600" : "text-red-600"}`}>
-              {message}
-            </p>
+            <p className="text-sm text-red-600">{message}</p>
           )}
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
-              disabled={loading || !supabase || !email}
+              disabled={loading || !supabase}
               className="flex-1 rounded bg-accent py-2 font-medium text-white hover:bg-accent-hover disabled:opacity-60"
             >
-              {loading ? "Sending…" : "Sign in with Magic Link"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
             <button
               type="button"
               onClick={signUp}
-              disabled={loading || !supabase || !email}
-              className="rounded border border-gray-200 px-3 py-2 text-sm text-primary hover:bg-gray-50 disabled:opacity-60"
+              disabled={loading || !supabase}
+              className="rounded border border-gray-200 px-3 py-2 text-sm text-primary hover:bg-gray-50"
             >
               Sign up
             </button>
+            <button
+              type="button"
+              onClick={signInWithMagicLink}
+              disabled={loading || !supabase}
+              className="rounded border border-gray-200 px-3 py-2 text-sm text-primary hover:bg-gray-50"
+            >
+              Magic link
+            </button>
           </div>
-          {password && (
-            <div className="mt-4 border-t pt-4">
-              <p className="mb-2 text-xs text-gray-500">Or sign in with password:</p>
-              <div>
-                <label htmlFor="password" className="mb-1 block text-sm font-medium text-primary">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded border border-gray-200 px-3 py-2 text-primary"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={signInWithPassword}
-                disabled={loading || !supabase || !email || !password}
-                className="mt-2 w-full rounded border border-gray-200 px-3 py-2 text-sm text-primary hover:bg-gray-50 disabled:opacity-60"
-              >
-                Sign in with Password
-              </button>
-            </div>
-          )}
         </form>
       </div>
     </div>
