@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (triggerBridge) {
       bridgeTarget = await resolveExecutivePartnerAndBridgeTarget(entities);
       if (bridgeTarget?.bridgeTargetPastCompanies?.length) {
-        const supabase = createClient();
+        const supabase = await createClient();
         const user = supabase ? (await supabase.auth.getUser()).data.user : null;
         const myHistory = user ? await getUserHistory(user.id) : undefined;
         bridgeOverlap = runBridgeForExecutivePartner(bridgeTarget, { myHistoryOverride: myHistory ?? undefined });

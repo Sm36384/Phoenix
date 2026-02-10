@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { MyHistory } from "@/types/integrations";
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +26,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

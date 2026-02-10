@@ -67,7 +67,7 @@ export function rankBridgesByRSS<T extends BridgeInput & { id?: string; name: st
     ...c,
     rss_score: bridgeScore.rss,
     rank_order: i + 1,
-  }));
+  })) as unknown as (T & { rss_score: number; rank_order: number })[];
 }
 
 /**

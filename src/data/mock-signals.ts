@@ -4,7 +4,6 @@
  */
 
 import type { Signal, Stakeholder, SignalWithStakeholders } from "@/types";
-import { computeRSS } from "@/lib/bridge-algorithm";
 
 const RIYADH_BANK_SIGNAL_ID = "sig-riyadh-bank-001";
 

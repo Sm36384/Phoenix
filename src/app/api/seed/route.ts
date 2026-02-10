@@ -104,7 +104,7 @@ export async function POST() {
 }
 
 /** Idempotent upsert of default scrape_sources for dashboard status bar (Green/Orange/Blue). */
-async function upsertScrapeSources(supabase: SupabaseClient<any>): Promise<number> {
+async function upsertScrapeSources(supabase: SupabaseClient): Promise<number> {
   const defaults = [
     { id: "linkedin-apify", display_name: "LinkedIn (Apify)", region: "Global", status: "ok" },
     { id: "bayt", display_name: "Bayt", region: "Middle East", status: "ok" },

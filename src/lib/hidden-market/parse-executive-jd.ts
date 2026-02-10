@@ -106,8 +106,7 @@ Return valid JSON only, with keys: partnerName, partnerTitle, company, roleTitle
       isExecutive: isExecutive || (salaryMinUsd != null && salaryMinUsd >= EXECUTIVE_SALARY_THRESHOLD_USD),
       contactNote: (parsed.contactNote as string) ?? null,
     };
-  } catch (e) {
-    const err = e instanceof Error ? e.message : String(e);
+  } catch {
     return {
       partnerName: null,
       partnerTitle: null,

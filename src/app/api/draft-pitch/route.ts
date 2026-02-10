@@ -13,7 +13,7 @@ import type { MyHistory } from "@/types/integrations";
 export const maxDuration = 30;
 
 async function getHistoryForDraft(): Promise<MyHistory> {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) return historyData as MyHistory;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return historyData as MyHistory;

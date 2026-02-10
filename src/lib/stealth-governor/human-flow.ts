@@ -11,7 +11,10 @@ import type { HumanMovePage } from "./human-mouse";
 
 export interface HumanFlowPage {
   goto: (url: string) => Promise<unknown>;
-  evaluate: <T>(fn: () => T) => Promise<T>;
+  evaluate: {
+    <T>(fn: () => T): Promise<T>;
+    <T, Arg>(fn: (arg: Arg) => T, arg: Arg): Promise<T>;
+  };
   mouse: { move(x: number, y: number): Promise<void> };
   content?: () => Promise<string>;
 }

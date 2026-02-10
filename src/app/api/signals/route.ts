@@ -9,7 +9,7 @@ import { getSignalsWithStakeholders } from "@/data/mock-signals";
  * When Supabase is not configured or user not logged in: returns mock data (or [] if Supabase configured but no user).
  */
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (!supabase) {
     return NextResponse.json(getSignalsWithStakeholders());

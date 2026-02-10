@@ -82,7 +82,7 @@ export async function resolveExecutivePartnerAndBridgeTarget(
 
   return {
     partnerName: apolloPerson.name ?? partnerName ?? "Partner",
-    partnerTitle: apolloPerson.title ?? entities.partnerTitle,
+    partnerTitle: apolloPerson.title ?? entities.partnerTitle ?? undefined,
     company,
     apolloPerson,
     linkedinUrl: apolloPerson.linkedin_url ?? linkedinUrlFromPhantom,
