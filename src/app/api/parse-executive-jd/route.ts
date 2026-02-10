@@ -1,59 +1,60 @@
+/**
+ * Thin adapter route handler for executive JD parsing.
+ * Delegates to lib/ai/parseExecutiveJD and lib/hidden-market modules.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import {
-  shouldTriggerPartnerBridgeLogic,
-} from "@/lib/hidden-market/parse-executive-jd";
-import { parseExecutiveJDWithConfidence } from "@/lib/hidden-market/parse-executive-jd-with-confidence";
-import { logLowConfidenceParse } from "@/lib/hidden-market/log-low-confidence-parse";
+import { parseExecutiveJD } from "@/lib/ai";
+import { shouldTriggerPartnerBridgeLogic } from "@/lib/hidden-market/parse-executive-jd";
 import {
   resolveExecutivePartnerAndBridgeTarget,
   runBridgeForExecutivePartner,
 } from "@/lib/hidden-market/executive-bridge-trigger";
 import { createClient } from "@/lib/supabase/server";
 import { getUserHistory } from "@/lib/history/get-user-history";
+import { validateParseJDBody } from "@/lib/validation/schemas";
+import { withSpan } from "@/lib/observability/otlp-wrapper";
 
 export const maxDuration = 60;
 
 /**
- * POST: body { imageBase64: string, jdTextPreview?: string, sourceId?: string }
- * Returns extracted entities with confidence scores and, if executive/$500k+, the resolved Bridge target + RSS.
+ * POST: body { imageBase64?: string, jdTextPreview?: string, sourceId?: string }
+ * Returns extracted entities and, if executive/$500k+, the resolved Bridge target + RSS.
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { imageBase64?: string; jdTextPreview?: string; sourceId?: string };
-    const imageBase64 = body.imageBase64;
-    if (!imageBase64 || typeof imageBase64 !== "string") {
+    // Step 1: Validate request body
+    const body = await request.json();
+    const validation = validateParseJDBody(body);
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: "imageBase64 required" },
+        { error: "Invalid request body", details: validation.errors },
         { status: 400 }
       );
     }
 
-    // Use confidence-based parsing with fallback
-    const entitiesWithConfidence = await parseExecutiveJDWithConfidence(
-      imageBase64,
-      body.jdTextPreview,
-      { confidenceThreshold: 0.6 }
+    const { imageBase64, jdTextPreview, sourceId } = validation.data!;
+
+    // Step 2: Parse JD using AI wrapper (with tracing)
+    const entities = await withSpan(
+      {
+        name: "parse_executive_jd",
+        attributes: {
+          hasImage: !!imageBase64,
+          hasText: !!jdTextPreview,
+          sourceId: sourceId ?? "unknown",
+        },
+      },
+      async () => {
+        return parseExecutiveJD({
+          imageBase64,
+          jdTextPreview,
+          useVision: !!imageBase64,
+        });
+      }
     );
 
-    // Log low-confidence parses for manual review
-    if (entitiesWithConfidence.confidence < 0.5) {
-      await logLowConfidenceParse(entitiesWithConfidence, {
-        jdTextPreview: body.jdTextPreview,
-        sourceId: body.sourceId,
-      });
-    }
-
-    const entities = {
-      partnerName: entitiesWithConfidence.partnerName,
-      partnerTitle: entitiesWithConfidence.partnerTitle,
-      company: entitiesWithConfidence.company,
-      roleTitle: entitiesWithConfidence.roleTitle,
-      salaryRange: entitiesWithConfidence.salaryRange,
-      salaryMinUsd: entitiesWithConfidence.salaryMinUsd,
-      isExecutive: entitiesWithConfidence.isExecutive,
-      contactNote: entitiesWithConfidence.contactNote,
-    };
-
+    // Step 3: Check if Bridge logic should trigger
     const triggerBridge = shouldTriggerPartnerBridgeLogic(entities);
 
     let bridgeTarget = null;
@@ -71,9 +72,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       entities,
-      confidence: entitiesWithConfidence.confidence,
-      fieldConfidences: entitiesWithConfidence.fieldConfidences,
-      parseMethod: entitiesWithConfidence.parseMethod,
       triggerBridge,
       bridgeTarget: bridgeTarget
         ? {

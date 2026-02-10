@@ -221,7 +221,7 @@ export async function parseExecutiveJDWithConfidence(
       fieldConfidences,
       parseMethod: "llm",
     };
-  } catch (error) {
+  } catch {
     // LLM failed entirely, use fallback if available
     if (textFallback) {
       return extractWithFallback(textFallback);

@@ -3,7 +3,6 @@
  * Addresses Risk 10.1: JD Quality & Parsing Accuracy
  */
 
-import { createClient } from "@supabase/supabase-js";
 import type { ExecutiveJDEntitiesWithConfidence } from "./parse-executive-jd-with-confidence";
 
 const CONFIDENCE_THRESHOLD_FOR_LOGGING = 0.5; // Log if confidence < 0.5
@@ -42,7 +41,6 @@ export async function logLowConfidenceParse(
   }
 
   try {
-    const supabase = createClient(url, key);
     // Note: You may want to create a `low_confidence_parses` table in Supabase
     // For now, we'll log to console or an existing audit table
     console.warn("[Low Confidence Parse - DB]", {

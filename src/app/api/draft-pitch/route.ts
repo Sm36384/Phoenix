@@ -1,14 +1,17 @@
+/**
+ * Thin adapter route handler for draft pitch.
+ * Delegates to lib/ai/draftPitch.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getPersonaForStakeholder,
-  PERSONA_SYSTEM_PROMPTS,
-  type PersonaRole,
-} from "@/lib/ghost-write/personas";
+import { getPersonaForStakeholder } from "@/lib/ghost-write/personas";
 import type { StakeholderType } from "@/types";
 import { anonymizedHistoryToPromptSummary } from "@/lib/privacy/anonymize-history";
 import { createClient } from "@/lib/supabase/server";
+import { draftPitch } from "@/lib/ai";
 import historyData from "@/data/my_history.json";
 import type { MyHistory } from "@/types/integrations";
+import { withSpan } from "@/lib/observability/otlp-wrapper";
 
 export const maxDuration = 30;
 
@@ -41,6 +44,7 @@ interface DraftBody {
 
 export async function POST(request: NextRequest) {
   try {
+    // Step 1: Validate request body
     const body = (await request.json()) as DraftBody;
     const {
       stakeholderType,
@@ -60,56 +64,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const persona: PersonaRole = getPersonaForStakeholder(stakeholderType, origin);
-    const systemPrompt = PERSONA_SYSTEM_PROMPTS[persona];
+    // Step 2: Get user history
     const history = await getHistoryForDraft();
     const historySummary = anonymizedHistoryToPromptSummary(history);
 
-    const userPrompt = `Draft a message with the following context. Use the persona and focus for this audience. Return only the draft text, no labels.
+    // Step 3: Determine persona
+    const persona = getPersonaForStakeholder(stakeholderType, origin);
 
-Role: ${headline}
-Company: ${company}${hub ? ` (${hub}${region ? `, ${region}` : ""})` : ""}
-${bridgeName ? `Bridge/Contact name: ${bridgeName}` : ""}
-${recruiterFirm ? `Recruiter firm: ${recruiterFirm}` : ""}
+    // Step 4: Build role summary
+    const roleSummary = `${headline} at ${company}${hub ? ` (${hub}${region ? `, ${region}` : ""})` : ""}${bridgeName ? ` - Contact: ${bridgeName}` : ""}${recruiterFirm ? ` via ${recruiterFirm}` : ""}`;
 
-${historySummary}`;
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { draft: "[Draft disabled: OPENAI_API_KEY not set.]", persona },
-        { status: 200 }
-      );
-    }
-
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+    // Step 5: Delegate to AI module with tracing
+    const draft = await withSpan(
+      {
+        name: "draft_pitch",
+        attributes: {
+          persona,
+          stakeholderType,
+          company,
+        },
       },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 600,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json(
-        { error: `OpenAI: ${res.status} ${err}` },
-        { status: 502 }
-      );
-    }
-
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const draft = data.choices?.[0]?.message?.content?.trim() ?? "";
+      async () => {
+        return draftPitch({
+          persona,
+          roleSummary,
+          anonymizedHistory: historySummary,
+          stakeholderName: bridgeName,
+        });
+      }
+    );
 
     return NextResponse.json({ draft, persona });
   } catch (e) {

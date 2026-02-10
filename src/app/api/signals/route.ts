@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   }
 
   // Get total count for pagination
-  const { count, error: countError } = await supabase
+  const { count } = await supabase
     .from("signals")
     .select("*", { count: "exact", head: true });
 
