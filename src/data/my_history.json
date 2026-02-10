@@ -1,0 +1,37 @@
+{
+  "$schema": "Professional history for Bridge overlap: companies, roles, and dates for tenure/recency and RSS.",
+  "person": {
+    "name": "Candidate",
+    "linkedin_url": null
+  },
+  "positions": [
+    {
+      "company": "Citi",
+      "company_normalized": "citi",
+      "title": "Managing Director, Digital Transformation",
+      "business_unit": "Technology",
+      "start_date": "2016-03",
+      "end_date": "2024-06",
+      "overlap_years": 8.25
+    },
+    {
+      "company": "HSBC",
+      "company_normalized": "hsbc",
+      "title": "Director, Platform Engineering",
+      "business_unit": "Global Banking",
+      "start_date": "2012-01",
+      "end_date": "2016-02",
+      "overlap_years": 4.17
+    },
+    {
+      "company": "Accenture",
+      "company_normalized": "accenture",
+      "title": "Senior Manager",
+      "business_unit": "Technology",
+      "start_date": "2007-06",
+      "end_date": "2011-12",
+      "overlap_years": 4.5
+    }
+  ],
+  "notes": "company_normalized is used for case-insensitive match against manager's past companies. Overlap and RSS are computed in find_mutual_overlap."
+}

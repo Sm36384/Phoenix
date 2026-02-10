@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build / Next
+.next/
+out/
+build/
+dist/
+
+# Env (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Debug / logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Supabase local (if used)
+supabase/.temp/
+
+# Misc
+*.tsbuildinfo
+transformation-pulse-global@*
