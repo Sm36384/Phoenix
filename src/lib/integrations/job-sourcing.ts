@@ -29,7 +29,7 @@ const LOCATION_TO_REGION_HUB: Record<string, { region: Region; hub: string }> = 
   "hong kong": { region: "East Asia", hub: "Hong Kong" },
   riyadh: { region: "Middle East", hub: "Riyadh" },
   dubai: { region: "Middle East", hub: "Dubai" },
-  abu dhabi: { region: "Middle East", hub: "Abu Dhabi" },
+  "abu dhabi": { region: "Middle East", hub: "Abu Dhabi" },
   uae: { region: "Middle East", hub: "Dubai" },
   saudi: { region: "Middle East", hub: "Riyadh" },
   mumbai: { region: "India", hub: "Mumbai" },
