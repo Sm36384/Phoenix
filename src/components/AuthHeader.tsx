@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Activity, LogOut, Settings } from "lucide-react";
 
 export function AuthHeader() {
   const [user, setUser] = useState<{ email?: string } | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -18,7 +18,7 @@ export function AuthHeader() {
       setUser(session?.user ?? null)
     );
     return () => subscription.unsubscribe();
-  }, [!!supabase]);
+  }, [supabase]);
 
   async function signOut() {
     if (supabase) {
