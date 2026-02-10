@@ -39,7 +39,6 @@ async function scrollFraction(
 async function randomViewportPoint(page: HumanFlowPage): Promise<{ x: number; y: number }> {
   return page.evaluate(() => {
     const w = window.innerWidth;
-    const h = window.innerHeight;
     return {
       x: Math.random() * w * 0.3 + w * 0.1,
       y: Math.random() * 80 + 20,

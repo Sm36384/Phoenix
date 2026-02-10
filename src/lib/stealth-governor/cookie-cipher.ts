@@ -8,7 +8,6 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypt
 const ALGO = "aes-256-gcm";
 const IV_LEN = 16;
 const TAG_LEN = 16;
-const SALT_LEN = 32;
 const KEY_LEN = 32;
 
 function getKey(): Buffer {

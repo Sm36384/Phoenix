@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { MyHistory, ProfessionalHistoryPosition } from "@/types/integrations";
+import type { MyHistory } from "@/types/integrations";
 import { anonymizedHistoryToPromptSummary } from "@/lib/privacy/anonymize-history";
 
 const defaultHistory: MyHistory = {
@@ -68,7 +68,7 @@ export default function HistoryPage() {
     }));
   }
 
-  function updatePosition(i: number, field: keyof ProfessionalHistoryPosition, value: string | number) {
+  function updatePosition(i: number, field: keyof MyHistory["positions"][number], value: string | number) {
     setHistory((h) => ({
       ...h,
       positions: h.positions.map((p, j) =>

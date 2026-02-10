@@ -5,9 +5,6 @@
 
 import type { HealRequest, HealResult } from "./types";
 
-const FIELD_PROMPT =
-  "The previous selector failed to extract this field. Based on the provided page content, find the new path for [Field Name]. Return only a single valid CSS selector, no explanation.";
-
 function buildTextPrompt(fieldName: string, html: string, selectorBefore?: string | null): string {
   const truncated = html.slice(0, 80_000);
   return `The previous CSS selector for the field "${fieldName}" failed.
