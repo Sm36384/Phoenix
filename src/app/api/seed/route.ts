@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * POST /api/seed — insert test signals + stakeholders into Supabase (dev only).
@@ -104,7 +104,7 @@ export async function POST() {
 }
 
 /** Idempotent upsert of default scrape_sources for dashboard status bar (Green/Orange/Blue). */
-async function upsertScrapeSources(supabase: ReturnType<typeof createClient>): Promise<number> {
+async function upsertScrapeSources(supabase: SupabaseClient<any>): Promise<number> {
   const defaults = [
     { id: "linkedin-apify", display_name: "LinkedIn (Apify)", region: "Global", status: "ok" },
     { id: "bayt", display_name: "Bayt", region: "Middle East", status: "ok" },

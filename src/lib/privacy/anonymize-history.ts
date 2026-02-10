@@ -4,7 +4,7 @@
  * Only anonymized metadata (company names, tenure ranges) for prompts or APIs.
  */
 
-import type { MyHistory, ProfessionalHistoryPosition } from "@/types/integrations";
+import type { MyHistory } from "@/types/integrations";
 
 export interface AnonymizedHistory {
   companies: string[];
